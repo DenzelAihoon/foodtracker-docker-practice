@@ -1,0 +1,18 @@
+
+services:
+  web:
+    image: nginx:alpine
+    ports:
+      - "8082:80"
+
+  database:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: practice_user
+      POSTGRES_PASSWORD: practice_password
+      POSTGRES_DB: practice_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
