@@ -1,0 +1,134 @@
+services:
+
+  database:
+
+    image: postgres:17
+
+    container_name: foodtracker-compose-db
+
+    restart: unless-stopped
+
+    environment:
+
+      POSTGRES_DB: foodtracker
+
+      POSTGRES_USER: foodtracker
+
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+
+    secrets:
+
+      - db_password
+
+    volumes:
+
+      - foodtracker-compose-data:/var/lib/postgresql/data
+
+    networks:
+
+      - foodtracker-net
+
+    healthcheck:
+
+      test: ["CMD-SHELL", "pg_isready -U foodtracker -d foodtracker"]
+
+      interval: 10s
+
+      timeout: 5s
+
+      retries: 5
+
+
+
+  db-client:
+
+    image: postgres:17
+
+    container_name: foodtracker-db-client
+
+    command: ["sleep", "infinity"]
+
+    restart: unless-stopped
+
+    secrets:
+
+      - app_password
+
+    networks:
+
+      - foodtracker-net
+
+
+
+
+  backend:
+
+    build:
+
+      context: /home/denzel/FoodTracker-source/backend
+
+    image: foodtracker-compose-backend
+
+    container_name: foodtracker-backend
+
+    restart: unless-stopped
+
+    ports:
+
+      - "5000:5000"
+
+    environment:
+
+      JWT_ACCESS_SECRET_FILE: /run/secrets/jwt_access_secret
+      CLIENT_ORIGIN: "http://192.168.15.132:4173"
+
+    secrets:
+
+      - db_password
+
+      - jwt_access_secret
+
+    networks:
+
+      - foodtracker-net
+
+    depends_on:
+
+      database:
+
+        condition: service_healthy
+
+
+
+volumes:
+
+  foodtracker-compose-data:
+
+    external: true
+
+    name: foodtracker-compose_foodtracker-compose-data
+
+
+
+networks:
+
+  foodtracker-net:
+
+    driver: bridge
+
+
+
+secrets:
+
+  db_password:
+
+    file: ./secrets/db_password.txt
+
+  app_password:
+
+    file: ./secrets/app_password.txt
+
+  jwt_access_secret:
+
+    file: ./secrets/jwt_access_secret.txt
+
